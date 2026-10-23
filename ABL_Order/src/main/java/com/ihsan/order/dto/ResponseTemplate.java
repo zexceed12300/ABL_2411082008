@@ -1,4 +1,4 @@
-package com.ihsan.order.vo;
+package com.ihsan.order.dto;
 
 import com.ihsan.order.entity.Order;
 

@@ -16,7 +16,7 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import com.ihsan.order.entity.Order;
 import com.ihsan.order.service.OrderService;
-import com.ihsan.order.vo.ResponseTemplate;
+import com.ihsan.order.dto.ResponseTemplate;
 
 @RestController
 @RequestMapping("/api/order")
@@ -43,8 +43,12 @@ public class OrderController {
 
     @PostMapping
     public ResponseEntity<Order> createOrder(@RequestBody Order order) {
-        Order saved = orderService.saveOrder(order);
-        return ResponseEntity.ok(saved);
+        try {
+            Order saved = orderService.saveOrder(order);
+            return ResponseEntity.ok(saved);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @PutMapping("/{id}")

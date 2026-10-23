@@ -1,4 +1,4 @@
-package com.example.emailservice;
+package com.ihsan.email.config;
 
 import org.springframework.amqp.core.Queue;
 import org.springframework.context.annotation.Bean;

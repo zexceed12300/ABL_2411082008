@@ -34,6 +34,7 @@ public class CustomerService {
         Customer existing = customerRepository.findById(id).orElse(null);
         if (existing != null) {
             existing.setName(customer.getName());
+            existing.setEmail(customer.getEmail());
             existing.setAddress(customer.getAddress());
             existing.setGender(customer.getGender());
             return customerRepository.save(existing);

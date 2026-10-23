@@ -15,15 +15,17 @@ public class Customer {
     private Integer id;
 
     private String name;
+    private String email;
     private String address;
     private String gender;
 
     public Customer() {
     }
 
-    public Customer(Integer id, String name, String address, String gender) {
+    public Customer(Integer id, String name, String email, String address, String gender) {
         this.id = id;
         this.name = name;
+        this.email = email;
         this.address = address;
         this.gender = gender;
     }
@@ -42,6 +44,14 @@ public class Customer {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public String getAddress() {

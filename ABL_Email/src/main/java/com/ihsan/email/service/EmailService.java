@@ -1,50 +1,44 @@
-package com.example.emailservice;
+package com.ihsan.email.service;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
-import tools.jackson.databind.ObjectMapper;
+import com.ihsan.email.dto.OrderEmailEvent;
 
 @Service
-public class OrderEmailListener {
+public class EmailService {
 
-	private static final Logger logger = LoggerFactory.getLogger(OrderEmailListener.class);
-	private final ObjectMapper objectMapper;
+	private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
 	private final JavaMailSender mailSender;
 	private final String fromAddress;
 
-	public OrderEmailListener(ObjectMapper objectMapper, JavaMailSender mailSender,
+	public EmailService(JavaMailSender mailSender,
 			@Value("${order.email.from:}") String fromAddress) {
-		this.objectMapper = objectMapper;
 		this.mailSender = mailSender;
 		this.fromAddress = fromAddress;
 	}
 
-	@RabbitListener(queues = RabbitMQConfig.ORDER_EMAIL_QUEUE)
-	public void sendOrderEmail(String payload) throws Exception {
-		var event = objectMapper.readTree(payload);
-		String recipient = event.path("recipientEmail").stringValue();
-		if (recipient.isBlank()) {
+	public void sendOrderConfirmation(OrderEmailEvent event) {
+		String recipient = event.getRecipientEmail();
+		if (recipient == null || recipient.isBlank()) {
 			throw new IllegalArgumentException("Event order tidak memiliki email penerima");
 		}
 
-		Long orderId = event.path("orderId").asLong();
-		String customerName = event.path("customerName").stringValue();
-		String productName = event.path("productName").stringValue();
-		int quantity = event.path("quantity").asInt();
-		BigDecimal unitPrice = event.path("unitPrice").decimalValue();
-		BigDecimal total = event.path("total").decimalValue();
-		String orderDate = event.path("orderDate").isNull()
+		Long orderId = event.getOrderId();
+		String customerName = event.getCustomerName();
+		String productName = event.getProductName();
+		int quantity = event.getQuantity() == null ? 0 : event.getQuantity();
+		BigDecimal unitPrice = event.getUnitPrice();
+		BigDecimal total = event.getTotal();
+		String orderDate = event.getOrderDate() == null
 				? "Tidak dicantumkan"
-				: LocalDate.parse(event.path("orderDate").stringValue()).toString();
+				: event.getOrderDate().toString();
 
 		SimpleMailMessage email = new SimpleMailMessage();
 		if (!fromAddress.isBlank()) {

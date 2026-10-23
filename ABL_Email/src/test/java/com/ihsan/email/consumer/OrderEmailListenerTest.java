@@ -1,4 +1,4 @@
-package com.example.emailservice;
+package com.ihsan.email.consumer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
@@ -11,6 +11,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 
+import com.ihsan.email.service.EmailService;
+
 import tools.jackson.databind.json.JsonMapper;
 
 @ExtendWith(MockitoExtension.class)
@@ -21,8 +23,9 @@ class OrderEmailListenerTest {
 
 	@Test
 	void sendOrderEmail_shouldBuildConfirmationFromOrderEvent() throws Exception {
+		EmailService emailService = new EmailService(mailSender, "toko@example.com");
 		OrderEmailListener listener = new OrderEmailListener(
-				JsonMapper.builder().build(), mailSender, "toko@example.com");
+				JsonMapper.builder().build(), emailService);
 		String payload = """
 				{"orderId":42,"customerName":"Dzaki","recipientEmail":"dzaki@example.com",
 				"productName":"Buku","quantity":2,"unitPrice":15000.00,"total":30000.00,
