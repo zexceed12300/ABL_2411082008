@@ -13,10 +13,18 @@ spring:
               uri: lb://product
               predicates: 
                 - Path=api/product/**
-            - id: ORDER
-              uri: lb://order
+            # CQRS: operasi tulis diarahkan ke Command Service
+            - id: ORDER-COMMAND
+              uri: lb://order-command
               predicates:
                 - Path=api/order/**
+                - Method=POST,PUT,DELETE
+            # CQRS: operasi baca diarahkan ke Query Service
+            - id: ORDER-QUERY
+              uri: lb://order-query
+              predicates:
+                - Path=api/order/**
+                - Method=GET
             - id: CUSTOMER
               uri: lb://pelanggan
               predicates:
