@@ -17,15 +17,17 @@ spring:
               uri: lb://product
               predicates:
                 - Path=api/product-category/**
-            - id: PRODUCT-CATEGORY
-              uri: lb://product
-              predicates:
-                - Path=api/product-category/**
-            - id: ORDER
+            - id: ORDER-WRITE
               uri: lb://order
               predicates:
                 - Path=api/order/**
-            - id: ORDER-QUERY
+                - Method=POST,PUT,DELETE
+            - id: ORDER-READ
+              uri: lb://order-query
+              predicates:
+                - Path=api/order/**
+                - Method=GET
+            - id: ORDER-QUERY-DIRECT
               uri: lb://order-query
               predicates:
                 - Path=api/order-query/**

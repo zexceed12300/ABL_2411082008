@@ -2,6 +2,7 @@ package com.ihsan.order.query.controller;
 
 import com.ihsan.order.query.dto.ResponseTemplate;
 import com.ihsan.order.query.entity.Order;
+import com.ihsan.order.query.middleware.RequireRole;
 import com.ihsan.order.query.service.OrderQueryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -14,8 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * Endpoint sisi read. Seluruh operasi tulis (POST/PUT/DELETE) dilayani oleh
- * Order Command Service.
+ * Endpoint sisi read CQRS. Seluruh operasi tulis (POST/PUT/DELETE) dilayani oleh
+ * Order Service (Command/Write side).
  */
 @RestController
 @RequestMapping("/api/order")
@@ -29,6 +30,7 @@ public class OrderQueryController {
     }
 
     @GetMapping
+    @RequireRole({"CUSTOMER", "ADMIN"})
     public ResponseEntity<List<Order>> getAllOrder(
             @RequestParam(value = "product-id", required = false) Integer productId,
             @RequestParam(value = "customer-id", required = false) Integer customerId) {
@@ -36,6 +38,7 @@ public class OrderQueryController {
     }
 
     @GetMapping("/{id}")
+    @RequireRole({"CUSTOMER", "ADMIN"})
     public List<ResponseTemplate> getOrderById(@PathVariable("id") int id) {
         return orderQueryService.getOrderWithProductById(id);
     }
