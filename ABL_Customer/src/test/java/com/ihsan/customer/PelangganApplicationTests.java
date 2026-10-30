@@ -1,4 +1,4 @@
-package com.ihsan.pelanggan;
+package com.ihsan.customer;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

@@ -1,1 +1,6 @@
 graphify-out/
+
+### log runtime run-all.sh ###
+.run-logs/
+.run-pids/
+.superpowers/

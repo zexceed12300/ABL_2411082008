@@ -13,22 +13,30 @@ spring:
               uri: lb://product
               predicates: 
                 - Path=api/product/**
-            # CQRS: operasi tulis diarahkan ke Command Service
-            - id: ORDER-COMMAND
-              uri: lb://order-command
+            - id: PRODUCT-CATEGORY
+              uri: lb://product
+              predicates:
+                - Path=api/product-category/**
+            - id: PRODUCT-CATEGORY
+              uri: lb://product
+              predicates:
+                - Path=api/product-category/**
+            - id: ORDER
+              uri: lb://order
               predicates:
                 - Path=api/order/**
-                - Method=POST,PUT,DELETE
-            # CQRS: operasi baca diarahkan ke Query Service
             - id: ORDER-QUERY
               uri: lb://order-query
               predicates:
-                - Path=api/order/**
-                - Method=GET
+                - Path=api/order-query/**
             - id: CUSTOMER
               uri: lb://pelanggan
               predicates:
                 - Path=api/customer/**
+            - id: AUTH
+              uri: lb://auth
+              predicates:
+                - Path=api/auth/**
 
 eureka:
   client:

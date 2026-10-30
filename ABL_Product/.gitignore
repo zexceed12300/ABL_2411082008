@@ -32,3 +32,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### H2 file database ###
+data/
