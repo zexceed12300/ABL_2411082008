@@ -1,6 +1,7 @@
 package com.ihsan.product.controller;
 
 import com.ihsan.product.entity.ProductCategory;
+import com.ihsan.product.middleware.RequireRole;
 import com.ihsan.product.service.ProductCategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -34,12 +35,14 @@ public class ProductCategoryController {
     }
 
     @PostMapping
+    @RequireRole("ADMIN")
     public ResponseEntity<ProductCategory> createProductCategory(@RequestBody ProductCategory productCategory) {
         ProductCategory saved = productCategoryService.saveProductCategory(productCategory);
         return ResponseEntity.ok(saved);
     }
 
     @PutMapping("/{id}")
+    @RequireRole("ADMIN")
     public ResponseEntity<ProductCategory> updateProductCategory(@PathVariable("id") int id, @RequestBody ProductCategory productCategory) {
         ProductCategory updated = productCategoryService.updateProductCategory(id, productCategory);
         if (updated != null) {
@@ -49,6 +52,7 @@ public class ProductCategoryController {
     }
 
     @DeleteMapping("/{id}")
+    @RequireRole("ADMIN")
     public ResponseEntity<Void> deleteProductCategory(@PathVariable("id") int id) {
         if (productCategoryService.deleteProductCategory(id)) {
             return ResponseEntity.noContent().build();

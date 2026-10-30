@@ -1,4 +1,4 @@
-package com.ihsan.customer.security;
+package com.ihsan.product.utils;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;

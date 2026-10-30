@@ -1,9 +1,10 @@
 package com.ihsan.order.middleware;
 
-import com.ihsan.order.security.JwtUtil;
+import com.ihsan.order.utils.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
+import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 @Component
@@ -17,20 +18,41 @@ public class JwtInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        String method = request.getMethod();
-        if ("OPTIONS".equalsIgnoreCase(method)) {
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             return true;
         }
 
+        if (!(handler instanceof HandlerMethod handlerMethod)) {
+            return true;
+        }
+
+        RequireRole requireRole = handlerMethod.getMethodAnnotation(RequireRole.class);
+        if (requireRole == null) {
+            requireRole = handlerMethod.getBeanType().getAnnotation(RequireRole.class);
+        }
+
         String authHeader = request.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        String token = (authHeader != null && authHeader.startsWith("Bearer "))
+                ? authHeader.substring(7).trim()
+                : null;
+
+        // Endpoint tanpa @RequireRole bersifat publik
+        if (requireRole == null) {
+            if (token != null && jwtUtil.validateToken(token)) {
+                request.setAttribute("username", jwtUtil.extractUsername(token));
+                request.setAttribute("role", jwtUtil.extractRole(token));
+            }
+            return true;
+        }
+
+        // Endpoint memerlukan otentikasi
+        if (token == null) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
             response.getWriter().write("{\"error\": \"Unauthorized\", \"message\": \"Missing or invalid Authorization header\"}");
             return false;
         }
 
-        String token = authHeader.substring(7).trim();
         if (!jwtUtil.validateToken(token)) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
@@ -41,20 +63,21 @@ public class JwtInterceptor implements HandlerInterceptor {
         String role = jwtUtil.extractRole(token);
         String username = jwtUtil.extractUsername(token);
 
-        // PUT dan DELETE hanya boleh dilakukan oleh ADMIN
-        if (("PUT".equalsIgnoreCase(method) || "DELETE".equalsIgnoreCase(method)) && !"ADMIN".equalsIgnoreCase(role)) {
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            response.setContentType("application/json");
-            response.getWriter().write("{\"error\": \"Forbidden\", \"message\": \"Admin role required to modify or delete order\"}");
-            return false;
-        }
-
-        // POST dan GET diizinkan untuk CUSTOMER dan ADMIN
-        if (!"CUSTOMER".equalsIgnoreCase(role) && !"ADMIN".equalsIgnoreCase(role)) {
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            response.setContentType("application/json");
-            response.getWriter().write("{\"error\": \"Forbidden\", \"message\": \"Access denied: insufficient permissions\"}");
-            return false;
+        // Validasi role jika didefinisikan pada anotasi
+        if (requireRole.value().length > 0) {
+            boolean authorized = false;
+            for (String allowedRole : requireRole.value()) {
+                if (allowedRole.equalsIgnoreCase(role)) {
+                    authorized = true;
+                    break;
+                }
+            }
+            if (!authorized) {
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                response.setContentType("application/json");
+                response.getWriter().write("{\"error\": \"Forbidden\", \"message\": \"Access denied: insufficient permissions\"}");
+                return false;
+            }
         }
 
         request.setAttribute("username", username);

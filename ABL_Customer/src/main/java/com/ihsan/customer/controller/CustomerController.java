@@ -1,6 +1,7 @@
 package com.ihsan.customer.controller;
 
 import com.ihsan.customer.entity.Customer;
+import com.ihsan.customer.middleware.RequireRole;
 import com.ihsan.customer.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -34,12 +35,14 @@ public class CustomerController {
     }
 
     @PostMapping
+    @RequireRole({"CUSTOMER", "ADMIN"})
     public ResponseEntity<Customer> createCustomer(@RequestBody Customer customer) {
         Customer saved = customerService.saveCustomer(customer);
         return ResponseEntity.ok(saved);
     }
 
     @PutMapping("/{id}")
+    @RequireRole({"CUSTOMER", "ADMIN"})
     public ResponseEntity<Customer> updateCustomer(@PathVariable("id") int id, @RequestBody Customer customer) {
         Customer updated = customerService.updateCustomer(id, customer);
         if (updated != null) {
@@ -49,6 +52,7 @@ public class CustomerController {
     }
 
     @DeleteMapping("/{id}")
+    @RequireRole("ADMIN")
     public ResponseEntity<Void> deleteCustomer(@PathVariable("id") int id) {
         if (customerService.deleteCustomer(id)) {
             return ResponseEntity.noContent().build();

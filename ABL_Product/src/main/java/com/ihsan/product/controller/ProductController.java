@@ -1,21 +1,13 @@
 package com.ihsan.product.controller;
 
+import com.ihsan.product.entity.Product;
+import com.ihsan.product.middleware.RequireRole;
+import com.ihsan.product.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
-import org.springframework.http.ResponseEntity;
-import com.ihsan.product.entity.Product;
-import com.ihsan.product.service.ProductService;
 
 @RestController
 @RequestMapping("/api/product")
@@ -51,12 +43,14 @@ public class ProductController {
     }
 
     @PostMapping
+    @RequireRole("ADMIN")
     public ResponseEntity<Product> createProduct(@RequestBody Product product) {
         Product saved = productService.saveProduct(product);
         return ResponseEntity.ok(saved);
     }
 
     @PutMapping("/{id}")
+    @RequireRole("ADMIN")
     public ResponseEntity<Product> updateProduct(@PathVariable("id") int id, @RequestBody Product product) {
         Product updated = productService.updateProduct(id, product);
         if (updated != null) {
@@ -66,6 +60,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/{id}")
+    @RequireRole("ADMIN")
     public ResponseEntity<Void> deleteProduct(@PathVariable("id") int id) {
         boolean deleted = productService.deleteProduct(id);
         if (deleted) {

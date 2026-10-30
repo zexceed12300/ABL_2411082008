@@ -1,4 +1,4 @@
-package com.ihsan.order.security;
+package com.ihsan.order.utils;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;

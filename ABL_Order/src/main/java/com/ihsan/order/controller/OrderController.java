@@ -1,22 +1,14 @@
 package com.ihsan.order.controller;
 
+import com.ihsan.order.dto.ResponseTemplate;
+import com.ihsan.order.entity.Order;
+import com.ihsan.order.middleware.RequireRole;
+import com.ihsan.order.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
-import org.springframework.http.ResponseEntity;
-import com.ihsan.order.entity.Order;
-import com.ihsan.order.service.OrderService;
-import com.ihsan.order.dto.ResponseTemplate;
 
 @RestController
 @RequestMapping("/api/order")
@@ -30,6 +22,7 @@ public class OrderController {
     }
 
     @GetMapping
+    @RequireRole({"CUSTOMER", "ADMIN"})
     public ResponseEntity<List<Order>> getAllOrder(
             @RequestParam(value = "product-id", required = false) Integer productId,
             @RequestParam(value = "customer-id", required = false) Integer customerId) {
@@ -37,11 +30,13 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
+    @RequireRole({"CUSTOMER", "ADMIN"})
     public List<ResponseTemplate> getOrderById(@PathVariable("id") int id) {
         return orderService.getOrderWithProductById(id);
     }
 
     @PostMapping
+    @RequireRole({"CUSTOMER", "ADMIN"})
     public ResponseEntity<Order> createOrder(@RequestBody Order order) {
         try {
             Order saved = orderService.saveOrder(order);
@@ -52,6 +47,7 @@ public class OrderController {
     }
 
     @PutMapping("/{id}")
+    @RequireRole("ADMIN")
     public ResponseEntity<Order> updateOrder(@PathVariable("id") int id, @RequestBody Order order) {
         Order updated = orderService.updateOrder(id, order);
         if (updated != null) {
@@ -61,6 +57,7 @@ public class OrderController {
     }
 
     @DeleteMapping("/{id}")
+    @RequireRole("ADMIN")
     public ResponseEntity<Void> deleteOrder(@PathVariable("id") int id) {
         boolean deleted = orderService.deleteOrder(id);
         if (deleted) {
