@@ -28,13 +28,15 @@ public class AuthService {
     }
 
     public AuthResponse register(RegisterRequest request) {
-        if (request.getUsername() == null || request.getUsername().isBlank() ||
-                request.getPassword() == null || request.getPassword().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username and password cannot be empty");
+        String email = request.getEmail();
+        String password = request.getPassword();
+
+        if (email == null || email.isBlank() || password == null || password.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email and password cannot be empty");
         }
 
-        if (userRepository.existsByUsername(request.getUsername())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username already exists");
+        if (userRepository.existsByEmail(email.trim())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email already exists");
         }
 
         String role = (request.getRole() != null && !request.getRole().isBlank())
@@ -45,28 +47,31 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Role must be either ADMIN or CUSTOMER");
         }
 
-        String encodedPassword = passwordEncoder.encode(request.getPassword());
-        User user = new User(request.getUsername(), encodedPassword, role);
+        String encodedPassword = passwordEncoder.encode(password);
+        User user = new User(email.trim(), encodedPassword, role);
         userRepository.save(user);
 
-        String token = jwtUtil.generateToken(user.getUsername(), user.getRole());
-        return new AuthResponse(token, user.getUsername(), user.getRole(), "User registered successfully");
+        String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
+        return new AuthResponse(token, user.getEmail(), user.getRole(), "User registered successfully");
     }
 
     public AuthResponse login(LoginRequest request) {
-        if (request.getUsername() == null || request.getPassword() == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username or password");
+        String email = request.getEmail();
+        String password = request.getPassword();
+
+        if (email == null || password == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
         }
 
-        User user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username or password"));
+        User user = userRepository.findByEmail(email.trim())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password"));
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username or password");
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
         }
 
-        String token = jwtUtil.generateToken(user.getUsername(), user.getRole());
-        return new AuthResponse(token, user.getUsername(), user.getRole(), "Login successful");
+        String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
+        return new AuthResponse(token, user.getEmail(), user.getRole(), "Login successful");
     }
 
     public ValidateResponse validate(String tokenHeader) {
@@ -82,9 +87,9 @@ public class AuthService {
             return new ValidateResponse(false, null, null, "Invalid or expired token");
         }
 
-        String username = jwtUtil.extractUsername(token);
+        String email = jwtUtil.extractEmail(token);
         String role = jwtUtil.extractRole(token);
 
-        return new ValidateResponse(true, username, role, "Token is valid");
+        return new ValidateResponse(true, email, role, "Token is valid");
     }
 }

@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class CustomerService {
@@ -19,6 +20,27 @@ public class CustomerService {
 
     public List<Customer> getAllCustomer() {
         return customerRepository.findAll();
+    }
+
+    public List<Customer> findByEmailOrName(String query) {
+        if (query == null || query.isBlank()) {
+            return customerRepository.findAll();
+        }
+        return customerRepository.findByEmailIgnoreCaseOrNameIgnoreCase(query.trim(), query.trim());
+    }
+
+    public Optional<Customer> findByEmail(String email) {
+        if (email == null || email.isBlank()) {
+            return Optional.empty();
+        }
+        return customerRepository.findByEmailIgnoreCase(email.trim());
+    }
+
+    public boolean existsByEmail(String email) {
+        if (email == null || email.isBlank()) {
+            return false;
+        }
+        return customerRepository.existsByEmailIgnoreCase(email.trim());
     }
 
     public Customer getCustomerById(int id) {
@@ -48,5 +70,10 @@ public class CustomerService {
             return true;
         }
         return false;
+    }
+
+    // buatkan function untuk mengalikan bilangan bulat dan bilangan berkoma, 2 parameter fungsi
+    public double multiply(int a, double b) {
+        return a * b;
     }
 }

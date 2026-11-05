@@ -137,6 +137,30 @@ public class OrderService {
         return List.of(responseTemplate);
     }
 
+    public Integer findCustomerIdByEmail(String email) {
+        if (email == null || email.isBlank()) {
+            return null;
+        }
+        try {
+            List<ServiceInstance> instances = discoveryClient.getInstances("pelanggan");
+            if (instances.isEmpty()) {
+                return null;
+            }
+            String customerUrl = instances.get(0).getUri().toString();
+            Customer customer = restTemplate.getForObject(customerUrl + "/api/customer/email/" + email.trim(), Customer.class);
+            if (customer != null) {
+                return customer.getId();
+            }
+        } catch (Exception e) {
+            logger.warn("Gagal lookup customerId untuk email {}: {}", email, e.getMessage());
+        }
+        return null;
+    }
+
+    public Integer findCustomerIdByUsername(String username) {
+        return findCustomerIdByEmail(username);
+    }
+
     private Product getProductForOrder(Order order) {
         List<ServiceInstance> instances = discoveryClient.getInstances("product");
         if (instances.isEmpty()) {

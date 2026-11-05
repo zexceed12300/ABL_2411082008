@@ -44,31 +44,31 @@ public class AuthServiceTest {
 
     @BeforeEach
     void setUp() {
-        sampleUser = new User("testuser", "encoded_secret", "CUSTOMER");
+        sampleUser = new User("testuser@example.com", "encoded_secret", "CUSTOMER");
         sampleUser.setId(1L);
     }
 
     @Test
     void testRegisterSuccessCustomer() {
-        RegisterRequest request = new RegisterRequest("testuser", "secret123", "CUSTOMER");
-        when(userRepository.existsByUsername("testuser")).thenReturn(false);
+        RegisterRequest request = new RegisterRequest("testuser@example.com", "secret123", "CUSTOMER");
+        when(userRepository.existsByEmail("testuser@example.com")).thenReturn(false);
         when(passwordEncoder.encode("secret123")).thenReturn("encoded_secret");
         when(userRepository.save(any(User.class))).thenReturn(sampleUser);
-        when(jwtUtil.generateToken("testuser", "CUSTOMER")).thenReturn("jwt_token_sample");
+        when(jwtUtil.generateToken("testuser@example.com", "CUSTOMER")).thenReturn("jwt_token_sample");
 
         AuthResponse response = authService.register(request);
 
         assertThat(response).isNotNull();
         assertThat(response.getToken()).isEqualTo("jwt_token_sample");
-        assertThat(response.getUsername()).isEqualTo("testuser");
+        assertThat(response.getEmail()).isEqualTo("testuser@example.com");
         assertThat(response.getRole()).isEqualTo("CUSTOMER");
         verify(userRepository).save(any(User.class));
     }
 
     @Test
     void testRegisterInvalidRoleThrowsBadRequest() {
-        RegisterRequest request = new RegisterRequest("testuser", "secret123", "INVALID_ROLE");
-        when(userRepository.existsByUsername("testuser")).thenReturn(false);
+        RegisterRequest request = new RegisterRequest("testuser@example.com", "secret123", "INVALID_ROLE");
+        when(userRepository.existsByEmail("testuser@example.com")).thenReturn(false);
 
         assertThatThrownBy(() -> authService.register(request))
                 .isInstanceOf(ResponseStatusException.class)
@@ -77,29 +77,29 @@ public class AuthServiceTest {
 
     @Test
     void testLoginSuccess() {
-        LoginRequest request = new LoginRequest("testuser", "secret123");
-        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(sampleUser));
+        LoginRequest request = new LoginRequest("testuser@example.com", "secret123");
+        when(userRepository.findByEmail("testuser@example.com")).thenReturn(Optional.of(sampleUser));
         when(passwordEncoder.matches("secret123", "encoded_secret")).thenReturn(true);
-        when(jwtUtil.generateToken("testuser", "CUSTOMER")).thenReturn("jwt_token_sample");
+        when(jwtUtil.generateToken("testuser@example.com", "CUSTOMER")).thenReturn("jwt_token_sample");
 
         AuthResponse response = authService.login(request);
 
         assertThat(response).isNotNull();
         assertThat(response.getToken()).isEqualTo("jwt_token_sample");
-        assertThat(response.getUsername()).isEqualTo("testuser");
+        assertThat(response.getEmail()).isEqualTo("testuser@example.com");
     }
 
     @Test
     void testValidateTokenSuccess() {
         String token = "Bearer valid_token";
         when(jwtUtil.validateToken("valid_token")).thenReturn(true);
-        when(jwtUtil.extractUsername("valid_token")).thenReturn("testuser");
+        when(jwtUtil.extractEmail("valid_token")).thenReturn("testuser@example.com");
         when(jwtUtil.extractRole("valid_token")).thenReturn("CUSTOMER");
 
         ValidateResponse response = authService.validate(token);
 
         assertThat(response.isValid()).isTrue();
-        assertThat(response.getUsername()).isEqualTo("testuser");
+        assertThat(response.getEmail()).isEqualTo("testuser@example.com");
         assertThat(response.getRole()).isEqualTo("CUSTOMER");
     }
 }

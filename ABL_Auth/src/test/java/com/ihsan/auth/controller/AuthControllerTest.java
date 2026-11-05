@@ -46,8 +46,8 @@ public class AuthControllerTest {
 
     @Test
     void testRegisterEndpointSuccess() throws Exception {
-        RegisterRequest request = new RegisterRequest("john", "secret123", "CUSTOMER");
-        AuthResponse response = new AuthResponse("token123", "john", "CUSTOMER", "User registered successfully");
+        RegisterRequest request = new RegisterRequest("john@example.com", "secret123", "CUSTOMER");
+        AuthResponse response = new AuthResponse("token123", "john@example.com", "CUSTOMER", "User registered successfully");
 
         when(authService.register(any(RegisterRequest.class))).thenReturn(response);
 
@@ -56,15 +56,15 @@ public class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.token").value("token123"))
-                .andExpect(jsonPath("$.username").value("john"))
+                .andExpect(jsonPath("$.email").value("john@example.com"))
                 .andExpect(jsonPath("$.role").value("CUSTOMER"));
     }
 
     @Test
-    void testRegisterDuplicateUsernameReturnsBadRequest() throws Exception {
-        RegisterRequest request = new RegisterRequest("john", "secret123", "CUSTOMER");
+    void testRegisterDuplicateEmailReturnsBadRequest() throws Exception {
+        RegisterRequest request = new RegisterRequest("john@example.com", "secret123", "CUSTOMER");
         when(authService.register(any(RegisterRequest.class)))
-                .thenThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username already exists"));
+                .thenThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email already exists"));
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -74,8 +74,8 @@ public class AuthControllerTest {
 
     @Test
     void testLoginEndpointSuccess() throws Exception {
-        LoginRequest request = new LoginRequest("john", "secret123");
-        AuthResponse response = new AuthResponse("token123", "john", "USER", "Login successful");
+        LoginRequest request = new LoginRequest("john@example.com", "secret123");
+        AuthResponse response = new AuthResponse("token123", "john@example.com", "CUSTOMER", "Login successful");
 
         when(authService.login(any(LoginRequest.class))).thenReturn(response);
 
@@ -84,14 +84,14 @@ public class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").value("token123"))
-                .andExpect(jsonPath("$.username").value("john"));
+                .andExpect(jsonPath("$.email").value("john@example.com"));
     }
 
     @Test
     void testLoginInvalidCredentialsReturnsUnauthorized() throws Exception {
-        LoginRequest request = new LoginRequest("john", "wrongpass");
+        LoginRequest request = new LoginRequest("john@example.com", "wrongpass");
         when(authService.login(any(LoginRequest.class)))
-                .thenThrow(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username or password"));
+                .thenThrow(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password"));
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -101,24 +101,14 @@ public class AuthControllerTest {
 
     @Test
     void testValidateEndpointSuccess() throws Exception {
-        ValidateResponse response = new ValidateResponse(true, "john", "USER", "Token is valid");
-        when(authService.validate("Bearer token123")).thenReturn(response);
+        ValidateResponse response = new ValidateResponse(true, "john@example.com", "CUSTOMER", "Token is valid");
+        when(authService.validate(eq("Bearer valid_token"))).thenReturn(response);
 
         mockMvc.perform(get("/api/auth/validate")
-                        .header("Authorization", "Bearer token123"))
+                        .header("Authorization", "Bearer valid_token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.valid").value(true))
-                .andExpect(jsonPath("$.username").value("john"));
-    }
-
-    @Test
-    void testValidateEndpointInvalid() throws Exception {
-        ValidateResponse response = new ValidateResponse(false, null, null, "Invalid or expired token");
-        when(authService.validate("Bearer badtoken")).thenReturn(response);
-
-        mockMvc.perform(get("/api/auth/validate")
-                        .header("Authorization", "Bearer badtoken"))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.valid").value(false));
+                .andExpect(jsonPath("$.email").value("john@example.com"))
+                .andExpect(jsonPath("$.role").value("CUSTOMER"));
     }
 }

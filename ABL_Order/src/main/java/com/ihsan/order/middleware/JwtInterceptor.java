@@ -39,7 +39,7 @@ public class JwtInterceptor implements HandlerInterceptor {
         // Endpoint tanpa @RequireRole bersifat publik
         if (requireRole == null) {
             if (token != null && jwtUtil.validateToken(token)) {
-                request.setAttribute("username", jwtUtil.extractUsername(token));
+                request.setAttribute("email", jwtUtil.extractEmail(token));
                 request.setAttribute("role", jwtUtil.extractRole(token));
             }
             return true;
@@ -61,7 +61,7 @@ public class JwtInterceptor implements HandlerInterceptor {
         }
 
         String role = jwtUtil.extractRole(token);
-        String username = jwtUtil.extractUsername(token);
+        String email = jwtUtil.extractEmail(token);
 
         // Validasi role jika didefinisikan pada anotasi
         if (requireRole.value().length > 0) {
@@ -80,7 +80,7 @@ public class JwtInterceptor implements HandlerInterceptor {
             }
         }
 
-        request.setAttribute("username", username);
+        request.setAttribute("email", email);
         request.setAttribute("role", role);
         return true;
     }

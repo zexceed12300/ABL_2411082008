@@ -18,11 +18,11 @@ public class JwtUtilTest {
 
     @Test
     void testGenerateAndValidateToken() {
-        String token = jwtUtil.generateToken("user123", "ADMIN");
+        String token = jwtUtil.generateToken("user123@example.com", "ADMIN");
         assertThat(token).isNotNull().isNotEmpty();
 
         assertThat(jwtUtil.validateToken(token)).isTrue();
-        assertThat(jwtUtil.extractUsername(token)).isEqualTo("user123");
+        assertThat(jwtUtil.extractEmail(token)).isEqualTo("user123@example.com");
         assertThat(jwtUtil.extractRole(token)).isEqualTo("ADMIN");
     }
 
@@ -34,7 +34,7 @@ public class JwtUtilTest {
     @Test
     void testExpiredToken() {
         JwtUtil shortLivedJwt = new JwtUtil(secret, -1000); // already expired
-        String token = shortLivedJwt.generateToken("user_expired", "USER");
+        String token = shortLivedJwt.generateToken("user_expired@example.com", "CUSTOMER");
         assertThat(jwtUtil.validateToken(token)).isFalse();
     }
 }

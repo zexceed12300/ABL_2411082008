@@ -1,10 +1,13 @@
 package com.ihsan.order.controller;
 
+import com.ihsan.order.dto.Customer;
 import com.ihsan.order.dto.ResponseTemplate;
 import com.ihsan.order.entity.Order;
 import com.ihsan.order.middleware.RequireRole;
 import com.ihsan.order.service.OrderService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,24 +28,68 @@ public class OrderController {
     @RequireRole({"CUSTOMER", "ADMIN"})
     public ResponseEntity<List<Order>> getAllOrder(
             @RequestParam(value = "product-id", required = false) Integer productId,
-            @RequestParam(value = "customer-id", required = false) Integer customerId) {
+            @RequestParam(value = "customer-id", required = false) Integer customerId,
+            HttpServletRequest request) {
+        String role = (String) request.getAttribute("role");
+        String userEmail = (String) request.getAttribute("email");
+
+        if ("CUSTOMER".equalsIgnoreCase(role) && userEmail != null) {
+            Integer myCustomerId = orderService.findCustomerIdByEmail(userEmail);
+            if (myCustomerId == null) {
+                return ResponseEntity.ok(List.of());
+            }
+            return ResponseEntity.ok(orderService.getAllOrder(productId, myCustomerId));
+        }
+
         return ResponseEntity.ok(orderService.getAllOrder(productId, customerId));
     }
 
     @GetMapping("/{id}")
     @RequireRole({"CUSTOMER", "ADMIN"})
-    public List<ResponseTemplate> getOrderById(@PathVariable("id") int id) {
-        return orderService.getOrderWithProductById(id);
+    public ResponseEntity<?> getOrderById(@PathVariable("id") int id, HttpServletRequest request) {
+        List<ResponseTemplate> result = orderService.getOrderWithProductById(id);
+        if (result == null || result.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        String role = (String) request.getAttribute("role");
+        String userEmail = (String) request.getAttribute("email");
+
+        if ("CUSTOMER".equalsIgnoreCase(role) && userEmail != null) {
+            Customer customer = result.get(0).getCustomer();
+            boolean isOwner = customer != null && customer.getEmail() != null && customer.getEmail().equalsIgnoreCase(userEmail);
+            if (!isOwner) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body("{\"error\": \"Forbidden\", \"message\": \"Access denied: you cannot view another customer's order\"}");
+            }
+        }
+
+        return ResponseEntity.ok(result);
     }
 
     @PostMapping
     @RequireRole({"CUSTOMER", "ADMIN"})
-    public ResponseEntity<Order> createOrder(@RequestBody Order order) {
+    public ResponseEntity<?> createOrder(@RequestBody Order order, HttpServletRequest request) {
+        String role = (String) request.getAttribute("role");
+        String userEmail = (String) request.getAttribute("email");
+
+        if ("CUSTOMER".equalsIgnoreCase(role) && userEmail != null) {
+            Integer myCustomerId = orderService.findCustomerIdByEmail(userEmail);
+            if (myCustomerId != null) {
+                if (order.getCustomerId() == null) {
+                    order.setCustomerId(myCustomerId);
+                } else if (!order.getCustomerId().equals(myCustomerId)) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .body("{\"error\": \"Forbidden\", \"message\": \"Access denied: you cannot create orders for another customer\"}");
+                }
+            }
+        }
+
         try {
             Order saved = orderService.saveOrder(order);
             return ResponseEntity.ok(saved);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body("{\"error\": \"Bad Request\", \"message\": \"" + e.getMessage() + "\"}");
         }
     }
 
